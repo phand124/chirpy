@@ -4,3 +4,4 @@ Root path tied to index.html
 Logo added under assets
 Readiness endpoint  created, files are served under 
 \n Metric counter endoint /metrics and /reset. \n /healthz and /metrics are GET restricted, /reset is POST restricted
+\n Admin namespace contains metrics and reset, API for healthz\n
