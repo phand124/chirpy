@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"sync/atomic"
 )
 
@@ -45,7 +46,7 @@ func (cfg *apiConfig) handlerReset(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(message))
 }
 
-// handler to validate max length of "Chirps"
+// handler to validate max length of "Chirps" and censor for language
 func (cfg *apiConfig) handlerValidateChirp(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
 		Body string `json:"body"`
@@ -60,19 +61,37 @@ func (cfg *apiConfig) handlerValidateChirp(w http.ResponseWriter, r *http.Reques
 	}
 
 	type returnVal struct {
-		Valid bool `json:"valid"`
+		Body string `json:"cleaned_body"`
 	}
 
+	// Length check
 	if len(params.Body) > 140 {
 		respoondWithError(w, 400, "Chirp is too long", nil)
 	} else {
-		respondWithJSON(w, 200, returnVal{Valid: true})
+		respondWithJSON(w, 200, returnVal{Body: censorPottyMouth(params.Body)})
 	}
 
 }
 
+// filter and censor chirps
+func censorPottyMouth(body string) string {
+	naughtyList := [3]string{"kerfuffle", "sharbert", "fornax"}
+
+	words := strings.Split(body, " ")
+	for i, word := range words {
+		for _, naughty := range naughtyList {
+			if strings.ToLower(word) == naughty {
+				words[i] = "****"
+			}
+		}
+
+	}
+	cleanedBody := strings.Join(words, " ")
+	return cleanedBody
+}
+
 // generic response with JSON
-func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
+func respondWithJSON(w http.ResponseWriter, code int, payload any) {
 
 	dat, err := json.Marshal(payload)
 	if err != nil {
