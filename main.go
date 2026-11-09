@@ -1,12 +1,18 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 	"sync/atomic"
+
+	"github.com/joho/godotenv"
+	_ "github.com/lib/pq"
+	"github.com/phand124/chirpy/internal/database"
 )
 
 // Handler for readiness enpoint
@@ -20,6 +26,7 @@ func handlerReadiness(w http.ResponseWriter, r *http.Request) {
 // stateful handler for number of requests
 type apiConfig struct {
 	fileserverHits atomic.Int32
+	db             *database.Queries
 }
 
 // Wrapper, increments metrics on hits to /app
@@ -119,8 +126,18 @@ func respoondWithError(w http.ResponseWriter, code int, msg string, err error) {
 }
 
 func main() {
+	godotenv.Load()
+	dbURL := os.Getenv("DB_URL")
+	db, err := sql.Open("postgres", dbURL)
+	if err != nil {
+		log.Fatal(err)
+	}
+	dbQueries := database.New(db)
+
 	mux := http.NewServeMux()
-	apiCfg := apiConfig{}
+	apiCfg := apiConfig{
+		db: dbQueries,
+	}
 
 	// main endpoint
 	mux.Handle("/app/", apiCfg.middlewareMetricsInc(http.StripPrefix("/app", http.FileServer(http.Dir(".")))))
