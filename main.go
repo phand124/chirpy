@@ -2,12 +2,10 @@ package main
 
 import (
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
-	"strings"
 	"sync/atomic"
 
 	"github.com/joho/godotenv"
@@ -51,50 +49,6 @@ func (cfg *apiConfig) handlerReset(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.WriteHeader(200)
 	w.Write([]byte(message))
-}
-
-// handler to validate max length of "Chirps" and censor for language
-func (cfg *apiConfig) handlerValidateChirp(w http.ResponseWriter, r *http.Request) {
-	type parameters struct {
-		Body string `json:"body"`
-	}
-
-	decoder := json.NewDecoder(r.Body)
-	params := parameters{}
-	err := decoder.Decode(&params)
-	if err != nil {
-		respoondWithError(w, 500, "Error decoding parameters:", err)
-		return
-	}
-
-	type returnVal struct {
-		Body string `json:"cleaned_body"`
-	}
-
-	// Length check
-	if len(params.Body) > 140 {
-		respoondWithError(w, 400, "Chirp is too long", nil)
-	} else {
-		respondWithJSON(w, 200, returnVal{Body: censorPottyMouth(params.Body)})
-	}
-
-}
-
-// filter and censor chirps
-func censorPottyMouth(body string) string {
-	naughtyList := [3]string{"kerfuffle", "sharbert", "fornax"}
-
-	words := strings.Split(body, " ")
-	for i, word := range words {
-		for _, naughty := range naughtyList {
-			if strings.ToLower(word) == naughty {
-				words[i] = "****"
-			}
-		}
-
-	}
-	cleanedBody := strings.Join(words, " ")
-	return cleanedBody
 }
 
 func main() {
