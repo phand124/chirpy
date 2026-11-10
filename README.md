@@ -10,3 +10,4 @@ Censorship for foul language in place \n
 [main c3843af] Moving to Postgre for database, created users table with goose for migrations\n
  1 file changed, 10 insertions(+)
  create mode 100644 sql/schema/001_users.sql
+Reset endpoint is locked to the 'dev' platform, deletes all Users from the server \n

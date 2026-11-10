@@ -2,14 +2,15 @@ package main
 
 import (
 	"database/sql"
+	"github.com/google/uuid"
+	"github.com/joho/godotenv"
+	_ "github.com/lib/pq"
+	"github.com/phand124/chirpy/internal/database"
 	"log"
 	"net/http"
 	"os"
 	"sync/atomic"
-
-	"github.com/joho/godotenv"
-	_ "github.com/lib/pq"
-	"github.com/phand124/chirpy/internal/database"
+	"time"
 )
 
 // Handler for readiness enpoint
@@ -24,6 +25,15 @@ func handlerReadiness(w http.ResponseWriter, r *http.Request) {
 type apiConfig struct {
 	fileserverHits atomic.Int32
 	db             *database.Queries
+	platform       string
+}
+
+// User struct for database.User
+type User struct {
+	ID        uuid.UUID `json:"id"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	Email     string    `json:"email"`
 }
 
 func main() {
@@ -37,7 +47,8 @@ func main() {
 
 	mux := http.NewServeMux()
 	apiCfg := apiConfig{
-		db: dbQueries,
+		db:       dbQueries,
+		platform: os.Getenv("PLATFORM"),
 	}
 
 	// main endpoint
@@ -45,6 +56,8 @@ func main() {
 
 	mux.HandleFunc("GET /api/healthz", handlerReadiness)
 	mux.HandleFunc("POST /api/validate_chirp", apiCfg.handlerValidateChirp)
+	mux.HandleFunc("POST /api/users", apiCfg.handlerUsersCreate)
+
 	mux.HandleFunc("GET /admin/metrics", apiCfg.handlerMetrics)
 	mux.HandleFunc("POST /admin/reset", apiCfg.handlerReset)
 

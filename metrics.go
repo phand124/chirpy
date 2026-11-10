@@ -20,11 +20,3 @@ func (cfg *apiConfig) handlerMetrics(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(200)
 	w.Write([]byte(message))
 }
-
-// Handler to reset metrics back to 0
-func (cfg *apiConfig) handlerReset(w http.ResponseWriter, r *http.Request) {
-	message := fmt.Sprintf("Hits: %v", cfg.fileserverHits.Swap(0))
-	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-	w.WriteHeader(200)
-	w.Write([]byte(message))
-}
